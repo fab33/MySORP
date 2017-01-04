@@ -1,0 +1,1 @@
+Number	orp01	"Redox [%d mV]" <faucet> (gPiscine) { channel="mysensors:waterQuality:gateway:orp01:orp"}

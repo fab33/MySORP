@@ -1,0 +1,5 @@
+  sitemap test label="Main Menu" {
+    Frame label="Piscine" {
+        Text item=orp01
+    } 
+  }
