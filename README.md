@@ -11,11 +11,14 @@ MySensors Firmware for Atlas scentific ORP sensor (EZO/ORP) and i2c protocol
 * Water ;)
 
 ## Software
-* [platformio](http://platformio.org/) (not tested with arduino IDE)
+* [Platformio](http://platformio.org/) (not tested with arduino IDE)
 * MySensors Controller (Personnaly I use [OpenHab2](http://www.openhab.org/) with [Mysensors plugin](https://github.com/tobof/openhab2-addons/wiki))
 
 ## Status
-Early Stage
+Early Stage (only retrieve ORP)
 
 ## TODO
-lot of things !
+* Add other function in ORP library (calibrate, led ...)
+* Add Web server for Wemos Target (Almost done put not on github now)
+* Add MQTT
+* Allow user to chose firmware features (Web/MySensors)
