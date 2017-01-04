@@ -1,6 +1,6 @@
 #include <Arduino.h>
 #include <Wire.h>
-#include "orp.h"
+#include "Orp.h"
 
 // time when data are avaibale
 unsigned int time_data_avaiable = 0;

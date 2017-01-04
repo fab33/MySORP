@@ -1,5 +1,4 @@
 #include <Arduino.h>
-#include <stdio.h>
 
 /**
    The MySensors Arduino library handles the wireless radio link and protocol
@@ -45,7 +44,7 @@
 #define SLEEP_TIME 10000
 #define CHILD_ORP 0
 
-#include "orp.h"
+#include <Orp.h>
 
 #include <MySensors.h>
 
