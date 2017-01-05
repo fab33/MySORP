@@ -1,6 +1,6 @@
 // I2C ID of ORP sensor
 #ifndef AS_ORP_ID
-#define AS_ORP_ID 98
+#define AS_ORP_ID 0x62
 #endif
 
 // time for reading data (in ms)
