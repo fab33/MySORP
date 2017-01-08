@@ -26,6 +26,7 @@
 */
 
 #define MY_DEBUG
+#define MY_DEBUG_SKETCH
 
 #define MY_NODE_ID 10
 
@@ -50,11 +51,14 @@
 
 boolean metric = true;
 
+unsigned int next_send = 0;
+
 MyMessage msgORP(CHILD_ORP, V_ORP);
 
 void setup()
 {
   Init_ORP();
+  next_send = millis();
 }
 
 void presentation()
@@ -66,8 +70,28 @@ void presentation()
 void loop()
 {
   float orp;
-  Request_ORP();
-  while(!(Read_ORP(&orp))) { yield();} // wait for orp acq
-  send(msgORP.set(orp,1)); //send ORP to gateway
-	delay(SLEEP_TIME);
+  if(millis() >= next_send) {
+    Request_ORP();
+    next_send += SLEEP_TIME;
+    //Serial.println("Lecture");
+  }
+  if((Read_ORP(&orp))) {
+    //Serial.println("Envoi");
+    send(msgORP.set(orp,1)); //send ORP to gateway
+  }
+}
+
+void receive(const MyMessage &message)
+{
+  Serial.print("Calibration value : "), Serial.println(message.getFloat());
+  /*if (message.isAck()) {}
+  else
+  {
+    if (message.type == V_ORP && message.sensor == CHILD_ORP)
+    {
+      #ifdef MY_DEBUG_SKETCH
+        Serial.print("Calibration value : "), Serial.println(message.getFloat());
+      #endif
+    }
+  }*/
 }
