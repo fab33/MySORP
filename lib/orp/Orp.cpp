@@ -1,17 +1,17 @@
 #include <Arduino.h>
 #include <Wire.h>
-#include "Orp.h"
+#include <Orp.h>
 
 
 // time when data are avaibale
 unsigned int time_data_avaiable = 0;
 
 // request pending
-boolean pending_request = false;
-
+uint8_t pending_request = ORP_WAITING;
 
 void Init_ORP()
 {
+  // Next code from http://www.forward.com.au/pfod/ArduinoProgramming/I2C_ClearBus/index.html
   #if defined(TWCR) && defined(TWEN)
   TWCR &= ~(_BV(TWEN)); //Disable the Atmel 2-Wire interface so we can control the SDA and SCL pins directly
   #endif
@@ -61,22 +61,22 @@ void Init_ORP()
   pinMode(SCL, INPUT);
 
   Wire.begin();
-  pending_request = false;
+  pending_request = ORP_WAITING;
 }
 
 void Request_ORP()
 {
-  //Serial.println("Requete ORP");
-  pending_request = true;
+  pending_request = ORP_READING;
   Wire.beginTransmission(AS_ORP_ID); // call the circuit by its ID number.
   Wire.write('r');        		        // request a reading by sending 'r'
   Wire.endTransmission();          	        // end the I2C data transmission.
-  time_data_avaiable = millis() + AS_READ_TIME; // calculate the next time to request a reading
+  time_data_avaiable = millis() + READ_TIME; // calculate the next time to request a reading
 }
-
 
 boolean Read_ORP(float *presult)
 {
+  if(pending_request != ORP_READING) // We are not waiting for ORP reading
+    return false;
   uint8_t code;
   char sensorData[8];
   unsigned int bytes_received = 0;
@@ -85,10 +85,21 @@ boolean Read_ORP(float *presult)
     return false;
   Wire.requestFrom(AS_ORP_ID, 9, 1);    // call the circuit and request 9 bytes (1 for status and 8 max for value).
   code = Wire.read(); // read return code before data
+  time_data_avaiable = 0; // no more data
   if(code != 1)  // an error occurs
     return false;
   while (Wire.available() && bytes_received < 9)
     sensorData[bytes_received++] = Wire.read();          // are there bytes to receive?
   sscanf(sensorData, "%f", presult);
   return true;
+}
+
+void Calibrate_ORP(float cal_value)
+{
+  return;
+}
+
+boolean Read_Cal(boolean *cal)
+{
+  return false;
 }

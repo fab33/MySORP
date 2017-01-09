@@ -7,7 +7,7 @@
    repeater and gateway builds a routing tables in EEPROM which keeps track of the
    network topology allowing messages to be routed to nodes.
 
-   Created by mboyer85
+   Created by fab33
    Full contributor list: https://github.com/mysensors/Arduino/graphs/contributors
 
    Documentation: http://www.mysensors.org
@@ -44,6 +44,7 @@
 
 #define SLEEP_TIME 10000
 #define CHILD_ORP 0
+#define CHILD_CAL 1
 
 #include <Orp.h>
 
@@ -54,6 +55,7 @@ boolean metric = true;
 unsigned int next_send = 0;
 
 MyMessage msgORP(CHILD_ORP, V_ORP);
+MyMessage msgCalOK(CHILD_CAL, V_STATUS);
 
 void setup()
 {
@@ -65,33 +67,38 @@ void presentation()
 {
 	sendSketchInfo("ORP Sensor", "1.0");
 	present(CHILD_ORP, S_WATER_QUALITY);
+  present(CHILD_CAL, S_WATER_QUALITY);
 }
 
 void loop()
 {
   float orp;
+  boolean cal;
   if(millis() >= next_send) {
     Request_ORP();
     next_send += SLEEP_TIME;
-    //Serial.println("Lecture");
   }
   if((Read_ORP(&orp))) {
-    //Serial.println("Envoi");
     send(msgORP.set(orp,1)); //send ORP to gateway
+  }
+  if(Read_Cal(&cal)) {
+    send(msgCalOK.set(cal));
   }
 }
 
 void receive(const MyMessage &message)
 {
-  Serial.print("Calibration value : "), Serial.println(message.getFloat());
-  /*if (message.isAck()) {}
+  if (message.isAck()) {}
   else
   {
-    if (message.type == V_ORP && message.sensor == CHILD_ORP)
+    if (message.type == V_ORP && message.sensor == CHILD_CAL)
     {
       #ifdef MY_DEBUG_SKETCH
         Serial.print("Calibration value : "), Serial.println(message.getFloat());
+        /*
+        Calibrate_ORP(message.getFloat());
+        */
       #endif
     }
-  }*/
+  }
 }
