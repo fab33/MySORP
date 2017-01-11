@@ -66,6 +66,8 @@ void Init_ORP()
 
 void Request_ORP()
 {
+  if (pending_request != ORP_WAITING)  // if doing something return !
+    return;
   pending_request = ORP_READING;
   Wire.beginTransmission(AS_ORP_ID); // call the circuit by its ID number.
   Wire.write('r');        		        // request a reading by sending 'r'
@@ -75,31 +77,90 @@ void Request_ORP()
 
 boolean Read_ORP(float *presult)
 {
-  if(pending_request != ORP_READING) // We are not waiting for ORP reading
-    return false;
   uint8_t code;
   char sensorData[8];
   unsigned int bytes_received = 0;
 
-  if(!pending_request || millis() < time_data_avaiable) // no request or request not ready
+  if(pending_request == ORP_READING && millis() > time_data_avaiable) {
+    Wire.requestFrom(AS_ORP_ID, 9, 1);    // call the circuit and request 9 bytes (1 for status and 8 max for value).
+    code = Wire.read(); // read return code before data
+    time_data_avaiable = 0; // no more data
+    pending_request = ORP_WAITING;
+    if(code != 1)  // an error occurs
+      return false;
+    while (Wire.available() && bytes_received < 9)
+      sensorData[bytes_received++] = Wire.read();          // are there bytes to receive?
+    sscanf(sensorData, "%f", presult);
+    return true;
+  }
+  else {
     return false;
-  Wire.requestFrom(AS_ORP_ID, 9, 1);    // call the circuit and request 9 bytes (1 for status and 8 max for value).
-  code = Wire.read(); // read return code before data
-  time_data_avaiable = 0; // no more data
-  if(code != 1)  // an error occurs
-    return false;
-  while (Wire.available() && bytes_received < 9)
-    sensorData[bytes_received++] = Wire.read();          // are there bytes to receive?
-  sscanf(sensorData, "%f", presult);
-  return true;
+  }
 }
 
-void Calibrate_ORP(float cal_value)
+void Calibrate_ORP(float *val)
 {
+  if (pending_request != ORP_WAITING)
+    return;
+  if(*val<0 || *val>1000)
+    return;
+  char tmp[11] = "Cal,";
+  dtostrf(*val,3,1, &tmp[4]); // We have to use dtostrf because Arduino doesn't support float in snprintf
+  Wire.beginTransmission(AS_ORP_ID); // call the circuit by its ID number.
+  Wire.write(tmp);        		        // request a calibration with cal_value
+  Wire.endTransmission();          	        // end the I2C data transmission.
+  time_data_avaiable = millis() + CAL_TIME;
+  pending_request = ORP_CALIBRATING;
+  *val = 0;
   return;
 }
 
-boolean Read_Cal(boolean *cal)
+boolean Calibrate_response_ORP(boolean* cal)
 {
-  return false;
+  uint8_t code;
+
+  if(pending_request == ORP_CALIBRATING && millis() > time_data_avaiable) {
+    Wire.requestFrom(AS_ORP_ID, 9, 1);    // call the circuit and request 9 bytes (1 for status and 8 max for value).
+    code = Wire.read(); // read return code before data
+    while (Wire.available()) { Wire.read(); } // flush bytes
+    if(code == 1)  {
+      *cal = CALIBRATION_OK;
+    }
+    else {
+      *cal = CALIBRATION_FAIL;
+      Serial.printf("Code : %d\n", code);
+    }
+    time_data_avaiable = 0;
+    pending_request = ORP_WAITING;
+    return true;
+  }
+  else {
+    return false;
+  }
+}
+
+boolean Get_ORPCal() {
+  uint8_t code;
+  char cal;
+  uint8_t i;
+
+  Wire.beginTransmission(AS_ORP_ID); // call the circuit by its ID number.
+  Wire.write("Cal,?");        		        // request a calibration with cal_value
+  Wire.endTransmission();          	        // end the I2C data transmission.  pending_request = ORP_CALIBRATING;
+  delay(300); // wait 300ms for response
+  Wire.requestFrom(AS_ORP_ID, 9, 1);    // call the circuit and request 9 bytes (1 for status and 8 max for value).
+  code = Wire.read(); // read return code before data
+  if (code != 1) { return false; }
+  for(i=0; i<5; i++) {
+    Serial.print((char)Wire.read()); // read return code before data
+  }
+  cal = Wire.read(); // read cal status (ASCII !)
+  Serial.print((char)cal);
+  while (Wire.available()) { Wire.read(); } // flush bytes
+  if(cal == '1')  {
+    return true;
+  }
+  else {
+    return false;
+  }
 }

@@ -14,7 +14,7 @@
 
 // time for reading data (in ms)
 #define READ_TIME 1000
-#define CAL_TIME 1300
+#define CAL_TIME 5000
 
 // function definition
 // Initialize library
@@ -27,6 +27,10 @@ void Request_ORP();
 boolean Read_ORP(float *presult);
 
 // Start calibration of ORP sensor
-void Calibrate_ORP(float cal_value);
+void Calibrate_ORP(float *val);
 
-boolean Read_Cal(boolean *cal);
+// Respone when calibration ending
+boolean Calibrate_response_ORP(boolean *cal);
+
+// Ask EZO ORP if device calibrated
+boolean Get_ORPCal();

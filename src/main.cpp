@@ -54,12 +54,17 @@ boolean metric = true;
 
 unsigned int next_send = 0;
 
+float cal_value;
+
 MyMessage msgORP(CHILD_ORP, V_ORP);
 MyMessage msgCalOK(CHILD_CAL, V_STATUS);
 
 void setup()
 {
-  Init_ORP();
+  Init_ORP(); // init Tentacle mini
+
+  send(msgCalOK.set(Get_ORPCal())); // get calibration status and send it
+
   next_send = millis();
 }
 
@@ -78,12 +83,15 @@ void loop()
     Request_ORP();
     next_send += SLEEP_TIME;
   }
-  if((Read_ORP(&orp))) {
+  if((Read_ORP(&orp))) { // return true if orp value is available
     send(msgORP.set(orp,1)); //send ORP to gateway
   }
-  if(Read_Cal(&cal)) {
+  if(Calibrate_response_ORP(&cal)) { // return true if calibration result is available
     send(msgCalOK.set(cal));
   }
+  // we have a calibration waiting !
+  if(cal_value != 0)
+    Calibrate_ORP(&cal_value);
 }
 
 void receive(const MyMessage &message)
@@ -93,12 +101,8 @@ void receive(const MyMessage &message)
   {
     if (message.type == V_ORP && message.sensor == CHILD_CAL)
     {
-      #ifdef MY_DEBUG_SKETCH
-        Serial.print("Calibration value : "), Serial.println(message.getFloat());
-        /*
-        Calibrate_ORP(message.getFloat());
-        */
-      #endif
+        // TODO : wait for pending request before sending calibration request
+        cal_value = message.getFloat();
     }
   }
 }
