@@ -24,11 +24,12 @@
    ORP sensor from Atlas scientific
 
 */
+#define VERSION "1.1"
 
 #define MY_DEBUG
 #define MY_DEBUG_SKETCH
 
-#define MY_NODE_ID 10
+#define MY_NODE_ID 211
 
 // Enable and select radio type attached
 #define MY_RADIO_RFM69
@@ -47,51 +48,41 @@
 #define CHILD_CAL 1
 
 #include <Orp.h>
-
 #include <MySensors.h>
 
 boolean metric = true;
 
-unsigned int next_send = 0;
+unsigned int nextSend = 0;
 
-float cal_value;
-
-MyMessage msgORP(CHILD_ORP, V_ORP);
-MyMessage msgCalOK(CHILD_CAL, V_STATUS);
+MyMessage msgOrp(CHILD_ORP, V_ORP);
+MyMessage msgCalOk(CHILD_ORP, V_STATUS);
 
 void setup()
 {
-  Init_ORP(); // init Tentacle mini
-
-  send(msgCalOK.set(Get_ORPCal())); // get calibration status and send it
-
-  next_send = millis();
+  initOrpSensor(); // init Tentacle mini
+  requestSensorCalState();
+  send(msgCalOk.set(getOrpCalStatus()));
+  nextSend = millis();
 }
 
 void presentation()
 {
-	sendSketchInfo("ORP Sensor", "1.0");
+	sendSketchInfo("ORP Sensor", VERSION);
 	present(CHILD_ORP, S_WATER_QUALITY);
-  present(CHILD_CAL, S_WATER_QUALITY);
 }
 
 void loop()
 {
-  float orp;
-  boolean cal;
-  if(millis() >= next_send) {
-    Request_ORP();
-    next_send += SLEEP_TIME;
+  if(millis() >= nextSend) {
+    requestOrp();
+    nextSend += SLEEP_TIME;
   }
-  if((Read_ORP(&orp))) { // return true if orp value is available
-    send(msgORP.set(orp,1)); //send ORP to gateway
+  if(orpDataAvailable()) { // value is available
+    send(msgOrp.set(getOrpValue(),1)); //send ORP to gateway with 1 decimal
   }
-  if(Calibrate_response_ORP(&cal)) { // return true if calibration result is available
-    send(msgCalOK.set(cal));
+  if(calStatusAvailable()) {
+    send(msgCalOk.set(getOrpCalStatus()));
   }
-  // we have a calibration waiting !
-  if(cal_value != 0)
-    Calibrate_ORP(&cal_value);
 }
 
 void receive(const MyMessage &message)
@@ -101,8 +92,7 @@ void receive(const MyMessage &message)
   {
     if (message.type == V_ORP && message.sensor == CHILD_CAL)
     {
-        // TODO : wait for pending request before sending calibration request
-        cal_value = message.getFloat();
+        calibrateOrpSensor(message.getFloat());
     }
   }
 }

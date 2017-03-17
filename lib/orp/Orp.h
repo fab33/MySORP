@@ -5,32 +5,51 @@
 #define AS_ORP_ID 0x62
 #endif
 
-#define ORP_WAITING 0
-#define ORP_READING 1
-#define ORP_CALIBRATING 2
-
-#define CALIBRATION_OK true
-#define CALIBRATION_FAIL false
-
 // time for reading data (in ms)
 #define READ_TIME 1000
 #define CAL_TIME 5000
 
+enum _calStatus {
+  CAL_UNKOWN, CAL_OK, CAL_FAIL
+};
+typedef enum _calStatus _calStatus;
+
+enum _smStatus {
+  ORP_WAITING, ORP_READING, ORP_CALIBRATING
+};
+typedef enum _smStatus _smStatus;
+
+struct orpData {
+  float sensorValue;    // last reading value
+  _calStatus calStatus; // Calibration status of sensor
+  float calValue;       // last calibration value
+  _smStatus smStatus;     // Status of state machine
+  unsigned int timeDataAvaible;
+};
+typedef orpData orpData;
+
+
 // function definition
 // Initialize library
-void Init_ORP();
+void initOrpSensor();
 
 // Request ORP reading
-void Request_ORP();
+void requestOrp();
 
-// return ORP value in result and true if value is valid else false
-boolean Read_ORP(float *presult);
+// Data avaible
+boolean orpDataAvailable();
+
+// return ORP value and 0 if an error occurs
+float getOrpValue();
+
+// Request initial sensors calibration state
+void requestSensorCalState();
+
+// New cal status is available
+boolean calStatusAvailable(); 
 
 // Start calibration of ORP sensor
-void Calibrate_ORP(float *val);
+void calibrateOrpSensor(float _val);
 
-// Respone when calibration ending
-boolean Calibrate_response_ORP(boolean *cal);
-
-// Ask EZO ORP if device calibrated
-boolean Get_ORPCal();
+// return Calibration status
+_calStatus getOrpCalStatus();
