@@ -95,6 +95,7 @@ float getOrpValue()
     while (Wire.available() && bytes_received < 9)
       sensorData[bytes_received++] = Wire.read();          // are there bytes to receive?
     sscanf(sensorData, "%f", &(_ORP.sensorValue));
+    _ORP.smStatus = ORP_WAITING;
   }
   return _ORP.sensorValue;
 }
