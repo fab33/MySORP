@@ -68,7 +68,7 @@ void setup()
 void presentation()
 {
 	sendSketchInfo("ORP Sensor", VERSION);
-	present(CHILD_ORP, S_WATER_QUALITY);
+	present(CHILD_ORP, S_WATER_QUALITY, "ORP.Send to cal");
 }
 
 void loop()
